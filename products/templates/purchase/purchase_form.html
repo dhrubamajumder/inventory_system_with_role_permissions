@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-body">
+            <h4 class="text-center mb-4">
+                {% if is_update %}
+                    Purchase Update
+                {% else %}
+                    Purchase Form
+                {% endif %}
+            </h4>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Supplier</label>
+                        {{ form.supplier }}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Purchase Date</label>
+                        <input type="date" class="form-control" name="purchase_date"
+                            value="{{ purchase.purchase_date|date:'Y-m-d' }}">
+                    </div>
+
+
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="Received">Received</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Ordered">Ordered</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Product Table -->
+                <table class="table table-bordered" id="productTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th width="100">Qty</th>
+                            <th width="150">Price</th>
+                            <th width="150">Total</th>
+                            <th width="80"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if items %}
+                            {% for item in items %}
+                            <tr>
+                                <td>
+                                    <select name="product" class="form-select product">
+                                        <option value="">Select Product</option>
+                                        {% for product in products %}
+                                            <option value="{{ product.id }}"
+                                                    data-price="{{ product.price }}"
+                                                    {% if product.id == item.product_id %} selected {% endif %}>
+                                                {{ product.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="quantity" class="form-control qty" value="{{ item.quantity }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="purchase_price" class="form-control price" value="{{ item.purchase_price }}" readonly>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control total" value="{{ item.quantity|floatformat:2|floatformat }} * {{ item.purchase_price }}" readonly>
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-danger btn-sm remove">X</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Default empty row for create -->
+                            <tr>
+                                <td>
+                                    <select name="product" class="form-select product">
+                                        <option value="">Select Product</option>
+                                        {% for product in products %}
+                                            <option value="{{ product.id }}" data-price="{{ product.price }}">
+                                                {{ product.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="quantity" class="form-control qty" value="1"></td>
+                                <td><input type="number" name="purchase_price" class="form-control price" readonly></td>
+                                <td><input type="number" class="form-control total" readonly></td>
+                                <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove">X</button></td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+
+                </table>
+
+                <button type="button" id="addRow" class="btn btn-secondary mb-3">
+                    + Add Product
+                </button>
+
+                <!-- Grand Total -->
+                <div class="row mb-3">
+                    <div class="col-md-4 ms-auto">
+                        <label class="form-label fw-bold">Grand Total</label>
+                        <input type="number" id="grandTotal"
+                               class="form-control fw-bold" readonly>
+                    </div>
+                </div>
+
+                <!-- ✅ SUBMIT BUTTON -->
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">
+                        {% if is_update %}
+                            Update Purchase
+                        {% else %}
+                            Submit Purchase
+                        {% endif %}
+                        
+                    </button>
+                    <a href="{% url 'purchase_list' %}" class="btn btn-secondary"> < Back</a>
+                </div>
+                
+
+            </form>
+            <!-- ✅ FORM END -->
+
+        </div>
+    </div>
+</div>
+
+<script>
+function calculate(){
+    let grand = 0;
+    document.querySelectorAll("#productTable tbody tr").forEach(row=>{
+        let qty = parseFloat(row.querySelector(".qty").value) || 0;
+        let price = parseFloat(row.querySelector(".price").value) || 0;
+        let total = qty * price;
+        row.querySelector(".total").value = total;
+        grand += total;
+    });
+    document.getElementById("grandTotal").value = grand;
+}
+
+// Product select → auto set price
+document.addEventListener("change", e=>{
+    if(e.target.classList.contains("product")){
+        let price = parseFloat(e.target.selectedOptions[0].dataset.price) || 0;
+        let row = e.target.closest("tr");
+        row.querySelector(".price").value = price;
+        calculate();
+    }
+});
+
+// Qty change
+document.addEventListener("input", e=>{
+    if(e.target.classList.contains("qty")) calculate();
+});
+
+// Add / Remove row
+document.addEventListener("click", e=>{
+    if(e.target.id === "addRow"){
+        let row = document.querySelector("#productTable tbody tr").cloneNode(true);
+        row.querySelectorAll("input").forEach(i => i.value = '');
+        row.querySelector(".qty").value = 1;
+        document.querySelector("#productTable tbody").appendChild(row);
+    }
+    if(e.target.classList.contains("remove")){
+        e.target.closest("tr").remove();
+        calculate();
+    }
+});
+</script>
+{% endblock %}

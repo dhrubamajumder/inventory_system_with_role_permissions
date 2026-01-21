@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card shadow-lg border-0 col-md-6 mx-auto">
+    <div class="card-body p-4">
+        <h3 class="text-center mb-4 fw-bold"> 
+            {% if is_update %}
+                Supplier Update
+            {% else %}
+                Add Supplier
+            {% endif %}
+        </h3>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            
+
+            <div class="texts justify-content-center d-flex">
+                <button type="submit" class="btn btn-success me-2">
+                    {% if is_update %}
+                        Update 
+                    {% else %}
+                        Submit
+                    {% endif %}
+                </button>
+                <a href="{% url 'supplier_list' %}" class="btn btn-secondary"> < Back</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Purchase List</h2>
+
+<a href="{% url 'purchase_create' %}" class="btn btn-primary mb-3">
+    + Create Purchase
+</a>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <table class="table table-bordered table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Products</th>
+                    <th>Supplier</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                    <th>Created By</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for purchase in purchases %}
+                <tr>
+                    <!-- ID -->
+                    <td>{{ forloop.counter }}</td>
+
+                    <!-- Products (single now, multiple later ready) -->
+                    <td>
+                        {% if purchase.items.all %}
+                            {% for item in purchase.items.all %}
+                                
+                                    {{ item.product.name }} ({{ item.quantity }})
+                                <br>
+                            {% endfor %}
+                        {% else %}
+                            {{ purchase.product.name }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Supplier -->
+                    <td>{{ purchase.supplier.name }}</td>
+
+                    <!-- Status -->
+                    <td>
+                        {% if purchase.status == "Received" %}
+                            <span class="badge bg-success">Received</span>
+                        {% elif purchase.status == "Pending" %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif purchase.status == "Ordered" %}
+                            <span class="badge bg-primary">Ordered</span>
+                        {% else %}
+                            <span class="badge bg-secondary">-</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Total -->
+                    <td>৳ {{ purchase.total }}</td>
+
+                    <!-- Date -->
+                    <td>{{ purchase.purchase_date|date:"Y-m-d H:i" }}</td>
+
+                    <!-- Created By -->
+                    <td>
+                        {{ purchase.created_by.username|default:"-" }}
+                    </td>
+
+                    <!-- Action -->
+                    <td>
+                        <a href="{% url 'purchase_detail' purchase.id %}" class="btn btn-sm btn-info"> View </a>
+
+                        <a href="{% url 'purchase_update' purchase.id %}" class="btn btn-sm btn-warning"> Edit </a>
+
+                        <form action="#"
+                              method="post"
+                              style="display:inline;">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Are you sure?')">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        No purchases found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+            <!-- Grand Total -->
+            <tfoot>
+                <tr class="table-secondary fw-bold">
+                    <td colspan="4" class="text-end">Grand Total:</td>
+                    <td>৳ {{ grand_total }}</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+
+    </div>
+</div>
+{% endblock %}

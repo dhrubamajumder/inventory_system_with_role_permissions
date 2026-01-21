@@ -1,0 +1,8 @@
+from django.contrib import admin
+from .models import Category, Product, Supplier, Purchase, Stock
+
+admin.site.register(Category)
+admin.site.register(Product)
+admin.site.register(Supplier)
+admin.site.register(Purchase)
+admin.site.register(Stock)
