@@ -237,5 +237,29 @@ def purchase_detail(request, pk):
     return render(request, 'purchase/purchase_details.html', {'purchase': purchase})
 
 
+# ----------------------------------------  Purchase  Details  -------------------------------------------
+# @login_required
+# def purchase_delete(request, pk):
+#     purchases = get_object_or_404(Purchase, pk=pk)
+#     if request.method == 'POST':
+#         for item in purchases.items.all():
+#             stock, created= Stock.objects.get_or_create(product=item.product)
+#             stock.quantity -= item.quantity
+#             if stock.quantity < 0:
+#                 stock.quantity = 0
+#             stock.save()
+#         purchases.delete()
+#         return redirect('purchase_list')    
 
-
+@login_required
+def purchase_delete(request, pk):
+    purchases = get_object_or_404(Purchase, pk=pk)
+    if request.method == 'POST':
+        for item in purchases.items.all():
+            stock, created= Stock.objects.get_or_create(product=item.product)
+            stock.quantity -= item.quantity
+            if stock.quantity < 0:
+                stock.quantity = 0
+            stock.save()
+        purchases.delete()
+        return redirect('purchase_list')

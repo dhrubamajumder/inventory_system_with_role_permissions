@@ -76,7 +76,7 @@
 
                         <a href="{% url 'purchase_update' purchase.id %}" class="btn btn-sm btn-warning"> Edit </a>
 
-                        <form action="#"
+                        <form action="{% url 'purchase_delete' purchase.id %}"
                               method="post"
                               style="display:inline;">
                             {% csrf_token %}

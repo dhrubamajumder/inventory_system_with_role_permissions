@@ -19,7 +19,7 @@ urlpatterns = [
     path('purchase/list/', views.purchase_list, name='purchase_list'),
     path('purchase/detail/<int:pk>/', views.purchase_detail, name='purchase_detail'),
     path('purchase/<int:pk>/update/', views.purchase_update, name='purchase_update'),
-    # path('purchase/<int:pk>/delete', views.purchase_detete, name='purchase_delete'),
+    path('purchase/<int:pk>/delete', views.purchase_delete, name='purchase_delete'),
     
     path('supplier/create/', views.supplier_create, name='supplier_create'),
     path('supplier/list/', views.supplier_list, name='supplier_list'),
