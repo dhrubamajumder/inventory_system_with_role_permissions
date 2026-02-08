@@ -12,13 +12,13 @@ body {
     overflow-x: hidden;
 }
 
-/* Sidebar */
 .sidebar {
     width: 250px;
     min-height: 100vh;
     background: #1c2b36;
     color: #fff;
 }
+
 
 .sidebar .nav-link {
     color: #fff;
@@ -61,6 +61,7 @@ a[aria-expanded="true"] .rotate-icon {
         padding-top: 70px;
     }
 }
+
 </style>
 </head>
 <body>
@@ -72,23 +73,19 @@ a[aria-expanded="true"] .rotate-icon {
         <button class="btn btn-outline-light d-lg-none me-2" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
             <i class="bi bi-list"></i>
         </button>
-
         <a class="navbar-brand fw-bold" href="#">Inventory System</a>
-
         <div class="ms-auto d-flex align-items-center">
 
-            
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button class="btn btn-danger mx-4 ms-4" type="submit" onclick="return confirm('Are you sure to Logout?')">Logout</button>
             </form>
-                
         </div>
     </div>
 </nav>
 
 <!-- Sidebar (Desktop) -->
-<div class="sidebar position-fixed d-none d-lg-block p-3">
+<div class="sidebar position-absolute d-none d-lg-block p-3">
     <div class="text-center mb-4 mt-3">
         <div> {{ user.username }}<span class="text-success">●</span></div>
         <p style="opacity: 70%; color: #73a4da;">Welcome: <span style="color: rgb(255, 255, 255);">role</span> </p>
@@ -129,7 +126,7 @@ a[aria-expanded="true"] .rotate-icon {
         {% with request.resolver_match.url_name as url_name %}
         <li class="nav-item">
             <a class="nav-link d-flex justify-content-between align-items-center
-                {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock settings' %} active bg-secondary {% endif %}" data-bs-toggle="collapse" href="#accountsMenu" aria-expanded="{% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock settings' %}true{% else %}false{% endif %}">
+                {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list permission_list permission_create stock settings' %} active bg-secondary {% endif %}" data-bs-toggle="collapse" href="#accountsMenu" aria-expanded="{% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list permission_list permission_create stock settings' %}true{% else %}false{% endif %}">
                 <span><i class="bi bi-gear"></i> Basic Settings</span><i class="bi bi-chevron-down rotate-icon"></i></a>
 
             <div class="collapse {% if url_name in 'product_create product_list category_create category_list stock settings' %}show{% endif %}" id="accountsMenu">
@@ -146,9 +143,13 @@ a[aria-expanded="true"] .rotate-icon {
 
                     <li><a class="nav-link {% if url_name == 'supplier_list' %}active text-info{% endif %}" href="{% url 'supplier_list' %}"> Supplier List </a></li>
 
+                    <li><a class="nav-link {% if url_name == 'permission_create' %}active text-info{% endif %}" href="{% url 'permission_create' %}"> Permission Create </a></li>
+
+                    <li><a class="nav-link {% if url_name == 'permission_list' %}active text-info{% endif %}" href="{% url 'permission_list' %}"> Permisison List </a></li>
+
                     <li><a class="nav-link {% if url_name == 'stock' %}active text-info{% endif %}" href="#"> Low Stock </a></li>
 
-                    <li><a class="nav-link {% if url_name == 'settings' %}active text-info{% endif %}" href="#"> System Settings </a></li>
+                    <li><a class="nav-link mb-3 {% if url_name == 'settings' %}active text-info{% endif %}" href="#"> System Settings </a></li>
                 </ul>
             </div>
         </li>
@@ -165,8 +166,8 @@ a[aria-expanded="true"] .rotate-icon {
             </a>
             <div class="collapse" id="Menu">
                 <ul class="nav flex-column bg-dark">
-                    <li><a class="nav-link" href="#">User List</a></li>
-                    <li><a class="nav-link" href="#">Role Assign</a></li>
+                    <li><a class="nav-link" href="{% url 'user_list' %}">User List</a></li>
+                    <li><a class="nav-link" href="{% url 'role_list' %}">Role Assign</a></li>
                     <li><a class="nav-link" href="#">Permission </a></li>
                 </ul>
             </div>
@@ -174,7 +175,7 @@ a[aria-expanded="true"] .rotate-icon {
 
     </ul>
 </div>
-
+          
 <!-- Sidebar (Mobile Offcanvas) -->
 <div class="offcanvas offcanvas-start bg-dark text-white" id="sidebarOffcanvas">
     <div class="offcanvas-header">

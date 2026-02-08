@@ -1,5 +1,6 @@
 
 
+from unicodedata import name
 from django.urls import path
 from . import views
 
@@ -26,4 +27,13 @@ urlpatterns = [
     path('supplier/<int:pk>/edit/', views.supplier_update, name='supplier_update'),
     path('supplier/<int:pk>/delete/', views.supplier_delete, name='supplier_delete'),
     
+    path('permission/list/', views.permission_list, name='permission_list'),
+    path('permission/create/', views.permission_create, name='permission_create'),
+    
+    path('role/list/', views.role_list, name='role_list'),
+    path('role/create/', views.role_create, name='role_create'),
+    path('role/<int:pk>/update/', views.role_update, name='role_update'),
+    path('role/<int:pk>/delete/', views.role_delete, name='role_delete'),
+
+    path('user/list/', views.user_list, name='user_list'),
 ]

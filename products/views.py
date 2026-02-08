@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from . models import Category, Product, Purchase, Stock, Supplier
-from . forms import CategoryForm, ProductForm, PurchaseForm, PurchaseItem, SupplierForm
+from . models import Category, Product, Purchase, Stock, Supplier, Permission, Role
+from . forms import CategoryForm, ProductForm, PurchaseForm, PurchaseItem, SupplierForm, PermissionForm, RoleForm
 from collections import defaultdict
-
+from .decorators import get_role_permissions
+from django.contrib import messages
+from django.contrib.auth.models import User
 
 
 # --------------------------------  Category Create  -----------------------------------------------------------------
@@ -237,19 +239,7 @@ def purchase_detail(request, pk):
     return render(request, 'purchase/purchase_details.html', {'purchase': purchase})
 
 
-# ----------------------------------------  Purchase  Details  -------------------------------------------
-# @login_required
-# def purchase_delete(request, pk):
-#     purchases = get_object_or_404(Purchase, pk=pk)
-#     if request.method == 'POST':
-#         for item in purchases.items.all():
-#             stock, created= Stock.objects.get_or_create(product=item.product)
-#             stock.quantity -= item.quantity
-#             if stock.quantity < 0:
-#                 stock.quantity = 0
-#             stock.save()
-#         purchases.delete()
-#         return redirect('purchase_list')    
+# ----------------------------------------  Purchase  Details  ------------------------------------------- 
 
 @login_required
 def purchase_delete(request, pk):
@@ -263,3 +253,65 @@ def purchase_delete(request, pk):
             stock.save()
         purchases.delete()
         return redirect('purchase_list')
+
+
+# ----------------------------------------------------------------------------------- 
+# ----------------------------------------  Purmission  List  ------------------------------------------- 
+# --------------------------------------------------------------------------------- 
+def permission_list(request):
+    permissions = Permission.objects.all().order_by('-id')
+    return render(request, 'permission/permission_list.html', {'permissions':permissions})
+
+
+def permission_create(request):
+    form = PermissionForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect('permission_list')
+    return render(request, 'permission/permission_form.html', {'form':form})
+
+
+# ----------------------------------------------------------------------------------- 
+# ----------------------------------------  Role  List  ------------------------------------------- 
+# --------------------------------------------------------------------------------- 
+def role_list(request):
+    role, permission, permission_list = get_role_permissions(request.user)
+    roles = Role.objects.all().order_by('-id')
+    return render(request, 'role/role_list.html', {'roles':roles, 'permissions_list':permission_list, 'permission':permission, 'role':role})
+
+
+def role_create(request):
+    form = RoleForm(request.POST or None)
+    if form.is_valid():
+        role = form.save(commit=False)  
+        role.save()                     
+        form.save_m2m()                 
+        messages.success(request, "Role created successfully!")
+        return redirect('role_list')
+    return render(request, 'role/role_form.html', {'form': form})
+
+
+def role_update(request, pk):
+    role = get_object_or_404(Role, pk=pk)
+    form = RoleForm(request.POST or None, instance=role)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Role updated successfully!")
+        return redirect('role_list')
+    return render(request, 'role/role_form.html', {'form': form, 'role': role})
+
+
+def role_delete(request, pk):
+    role = get_object_or_404(Role, pk=pk)
+    if request.method == 'POST':
+        role.delete()
+        messages.success(request, "Role deleted successfully!")
+        return redirect('role_list')
+
+
+#----------------------------------   User  --------------------------------------
+def user_list(request):
+    role, permissions, permission_list = get_role_permissions(request.user)
+    users = User.objects.all().order_by('-id')
+    return render(request, 'user/user_list.html', {'users': users, 'permissions_list': permission_list, 'permissions':permissions, 'role':role})
+

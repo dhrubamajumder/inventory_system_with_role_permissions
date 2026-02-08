@@ -1,6 +1,6 @@
 from django import forms 
 from django.contrib.auth.models import User
-from .models import Category, Product, Purchase, PurchaseItem, Supplier
+from .models import Category, Product, Purchase, PurchaseItem, Supplier, Permission, Role
 
 
 class RegisterForm(forms.ModelForm):
@@ -74,4 +74,39 @@ class SupplierForm(forms.ModelForm):
             'address': forms.Textarea(attrs={'class': 'form-control'}),
         }
     
-       
+    
+class PermissionForm(forms.ModelForm):
+    class Meta:
+        model = Permission
+        fields = ['name', 'group']
+        widgets = {
+            'name': forms.TextInput(attrs={'class':'form_control'}),
+            'group': forms.TextInput(attrs={'class':'form_control'}),
+        }
+        
+
+# class RoleForm(forms.ModelForm):
+#     class Meta:
+#         model = Role
+#         fields = ['name', 'permission']
+#         widgets = {
+#             'name': forms.TextInput(attrs={'class':'form_control'}),
+#             'permission': forms.SelectMultiple(attrs={'class':'form_control'}),
+#         }
+
+
+class RoleForm(forms.ModelForm):
+    permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+
+    class Meta:
+        model = Role
+        fields = ['name', 'permissions']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        
+        
