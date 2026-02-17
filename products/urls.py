@@ -43,4 +43,6 @@ urlpatterns = [
     path('system/list/', views.system_list, name='system_list'),
     path('system/', views.company_create, name='system'),
     path('system/<int:pk>/update/', views.system_update, name='system_update'),  
+    
+    path('stock/list/', views.low_stock_list, name='stock_list'),
 ]

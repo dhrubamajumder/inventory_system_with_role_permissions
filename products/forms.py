@@ -62,6 +62,12 @@ class PurchaseItemForm(forms.ModelForm):
             'purchase_price': forms.NumberInput(attrs={'class': 'form-control price', 'readonly': True}),
         }
 
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get('quantity')
+        if quantity < 1:
+            raise forms.ValidationError("Quantity must be at least 1.")
+        return quantity
+
 
 class SupplierForm(forms.ModelForm):
     class Meta:

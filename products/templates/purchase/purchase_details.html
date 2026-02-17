@@ -45,6 +45,7 @@
                     <th style="color: #ffffff; text-align:left;" class="p-3">Product</th>
                     <th style="color: #ffffff; text-align:right;">Quantity</th>
                     <th style="color:white; text-align:right;">Price</th>
+                    <th style="color:white; text-align:right;">Status</th>
                     <th style="color:white; text-align:right;" class="p-3">Total</th>
                 </tr>
             </thead>
@@ -54,13 +55,23 @@
                     <td class="p-2">{{ item.product.name }}</td>
                     <td style="padding:5px; text-align:right;">{{ item.quantity }}</td>
                     <td style="padding:5px; text-align:right;">{{ item.price }}</td>
+                    <td style="padding:5px; text-align:right;">
+                        {% if purchase.status == "Received" %}
+                            <span class="badge bg-success">Received</span>
+                        {% elif purchase.status == "Pending" %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif purchase.status == "Ordered" %}
+                            <span class="badge bg-primary">Ordered</span>
+                        {% else %}
+                            <span class="badge bg-secondary">-</span>
+                        {% endif %}
                     <td style="padding:5px; text-align:right;" class="p-2">{{ item.total }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
             <tfoot>
-                <tr style="font-weight:bold;" class="p-3">
-                    <td colspan="3" style="text-align:right; padding:5px;">Grand Total</td>
+                <tr style="font-weight:bold;" class="p-4">
+                    <td colspan="4" style="text-align:right; padding:5px;">Grand Total</td>
                     <td style="padding:5px; text-align:right;" class="p-2">{{ purchase.total }}</td>
                 </tr>
             </tfoot>

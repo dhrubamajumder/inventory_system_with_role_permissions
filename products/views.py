@@ -193,6 +193,7 @@ def supplier_delete(request, pk):
 
 # ---------------------- Purchase  Create   ------------------------------
 
+
 @login_required(login_url='/login/')
 def create_purchase(request):
     if request.method == 'POST':
@@ -210,13 +211,24 @@ def create_purchase(request):
                     product_qty_map[int(prod_id)] += int(qty)
             for prod_id, total_qty in product_qty_map.items():
                 price = float(prices[products.index(str(prod_id))])
-                item = PurchaseItem.objects.create(purchase=purchase, product_id=prod_id, quantity=total_qty, purchase_price=price)
-                stock, _ = Stock.objects.get_or_create(product_id=prod_id, defaults={'quantity': 0})
-                stock.quantity += total_qty
-                stock.save()
+                item = PurchaseItem.objects.create(
+                    purchase=purchase, 
+                    product_id=prod_id, 
+                    quantity=total_qty, 
+                    purchase_price=price
+                )
+                if purchase.status == 'Received':
+                    stock, _ = Stock.objects.get_or_create(
+                        product_id=prod_id,
+                        defaults={'quantity': 0}
+                    )
+                    stock.quantity += total_qty
+                    stock.save()
+
             return redirect('purchase_detail', pk=purchase.id)
     else:
         form = PurchaseForm()
+    
     products = Product.objects.all()
     return render(request, 'purchase/purchase_form.html', {
         'form': form,
@@ -228,43 +240,69 @@ def create_purchase(request):
 @login_required(login_url='/login/')
 def purchase_update(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
+    old_status = purchase.status
+
     products = Product.objects.all().order_by('id')
     items = [
-        {'product_id': item.product.id, 'quantity': item.quantity, 'purchase_price': item.purchase_price,}
-        for item in purchase.items.all()]
+        {
+            'product_id': item.product.id,
+            'quantity': item.quantity,
+            'purchase_price': item.purchase_price,
+        }
+        for item in purchase.items.all()
+    ]
+
     if request.method == 'POST':
         form = PurchaseForm(request.POST, instance=purchase)
         if form.is_valid():
             updated_purchase = form.save(commit=False)
             updated_purchase.created_by = request.user
-            date_str = request.POST.get('purchase_date')
-            if date_str:
-                updated_purchase.purchase_date = date_str
             updated_purchase.save()
-            for item in purchase.items.all():
-                stock, _ = Stock.objects.get_or_create(product=item.product)
-                stock.quantity -= item.quantity
-                if stock.quantity < 0:
-                    stock.quantity = 0
-                stock.save()
+
+            new_status = updated_purchase.status
+
+            if old_status == 'Received':
+                for item in purchase.items.all():
+                    stock = Stock.objects.filter(product=item.product).first()
+                    if stock:
+                        stock.quantity = max(0, stock.quantity - item.quantity)
+                        stock.save()
+
             purchase.items.all().delete()
+
             product_ids = request.POST.getlist('product')
             quantities = request.POST.getlist('quantity')
             prices = request.POST.getlist('purchase_price')
+
             for prod_id, qty, price in zip(product_ids, quantities, prices):
-                if prod_id:
-                    prod_id = int(prod_id)
-                    qty = int(qty)
-                    price = float(price)
-                    item = PurchaseItem.objects.create(purchase=purchase, product_id=prod_id, quantity=qty, purchase_price=price)
-                    stock, _ = Stock.objects.get_or_create(product=item.product, defaults={'quantity': 0})
-                    stock.quantity += qty
-                    stock.save()
+                if prod_id and int(qty) > 0:
+                    item = PurchaseItem.objects.create(
+                        purchase=purchase,
+                        product_id=int(prod_id),
+                        quantity=int(qty),
+                        purchase_price=float(price)
+                    )
+
+                    if new_status == 'Received':
+                        stock, _ = Stock.objects.get_or_create(
+                            product=item.product,
+                            defaults={'quantity': 0}
+                        )
+                        stock.quantity += item.quantity
+                        stock.save()
+
             return redirect('purchase_list')
+
     else:
         form = PurchaseForm(instance=purchase)
-    return render(request, 'purchase/purchase_form.html', {'form': form,'products': products,'purchase': purchase,'items': items, 'is_update': True})
 
+    return render(request, 'purchase/purchase_form.html', {
+        'form': form,
+        'products': products,
+        'purchase': purchase,
+        'items': items,
+        'is_update': True
+    })
 
 # ----------------------------------------  Purchase  List  -------------------------------------------
 
@@ -292,7 +330,7 @@ def purchase_detail(request, pk):
     return render(request, 'purchase/purchase_details.html', {'purchase': purchase})
 
 
-# ----------------------------------------  Purchase  Details  ------------------------------------------- 
+# ----------------------------------------  Purchase    ------------------------------------------- 
 
 @login_required(login_url='/login/')
 def purchase_delete(request, pk):
@@ -511,4 +549,12 @@ def system_update(request, pk):
     print(form.errors) 
     return render(request, 'system/system.html', {'form': form, 'title': 'Update System Settings'})
 
+
+
+# -------------------------------------------------  low stock  ----------------------------------
+def low_stock_list(request):
+    products = Product.objects.filter(stock__quantity__lt=8).order_by('id')
+    role, permissions, permissions_list = get_role_permissions(request.user)
+    context = {'products': products, 'role': role, 'permissions': permissions, 'permissions_list': permissions_list}
+    return render(request, 'low_stock/stock_list.html', context)
 

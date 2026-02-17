@@ -29,9 +29,9 @@
                     <div class="col-md-4">
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status">
-                            <option value="Received">Received</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Ordered">Ordered</option>
+                            <option value="Received" {% if purchase.status == "Received" %}selected{% endif %}>Received</option>
+                            <option value="Pending" {% if purchase.status == "Pending" %}selected{% endif %}>Pending</option>
+                            <option value="Ordered" {% if purchase.status == "Ordered" %}selected{% endif %}>Ordered</option>
                         </select>
                     </div>
                 </div>

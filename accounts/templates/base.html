@@ -131,10 +131,10 @@ a[aria-expanded="true"] .rotate-icon {
                 {% with request.resolver_match.url_name as url_name %}
                 <li class="nav-item">
                     <a class="nav-link d-flex justify-content-between align-items-center
-                        {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock system_list' %} active bg-secondary {% endif %}" data-bs-toggle="collapse" href="#accountsMenu" aria-expanded="{% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock system_list' %}true{% else %}false{% endif %}">
+                        {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %} active bg-secondary {% endif %}" data-bs-toggle="collapse" href="#accountsMenu" aria-expanded="{% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %}true{% else %}false{% endif %}">
                         <span><i class="bi bi-gear"></i> Basic Settings</span><i class="bi bi-chevron-down rotate-icon"></i></a>
 
-                    <div class="collapse {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock system_list' %}show{% endif %}" id="accountsMenu">
+                    <div class="collapse {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %}show{% endif %}" id="accountsMenu">
                         <ul class="nav flex-column bg-dark ms-3">
                             <li><a class="nav-link {% if url_name == 'category_create' %}active text-info{% endif %}" href="{% url 'category_create' %}"> Category </a></li>
 
@@ -148,7 +148,7 @@ a[aria-expanded="true"] .rotate-icon {
 
                             <li><a class="nav-link {% if url_name == 'supplier_list' %}active text-info{% endif %}" href="{% url 'supplier_list' %}"> Supplier List </a></li>
 
-                            <li><a class="nav-link {% if url_name == 'stock' %}active text-info{% endif %}" href="#"> Low Stock List</a></li>
+                            <li><a class="nav-link {% if url_name == 'stock_list' %}active text-info{% endif %}" href="{% url 'stock_list' %}"> Low Stock List</a></li>
 
                             <li><a class="nav-link mb-3 {% if url_name == 'system_list' %}active text-info{% endif %}" href="{% url 'system_list' %}"> System Settings </a></li>
                         </ul>
