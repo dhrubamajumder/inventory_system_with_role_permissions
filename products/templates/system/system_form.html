@@ -1,0 +1,28 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container my-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+
+                {% if form.instance.logo %}
+                    <img src="{{ form.instance.logo.url }}" alt="Logo" style="height:80px;">
+                {% endif %}
+
+                <input type="checkbox" name="delete_logo"> Delete Logo
+
+                <button type="submit">Save</button>
+            </form>
+
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -35,5 +35,12 @@ urlpatterns = [
     path('role/<int:pk>/update/', views.role_update, name='role_update'),
     path('role/<int:pk>/delete/', views.role_delete, name='role_delete'),
 
-    path('user/list/', views.user_list, name='user_list'),
+    path('users/list/', views.user_list, name='user_list'),
+    path('user/create/',  views.add_user, name='add_user'),
+    path('users/edit/<int:id>/',  views.edit_user, name='edit_user'),
+    path('users/delete/<int:id>/',  views.delete_user, name='delete_user'),
+    
+    path('system/list/', views.system_list, name='system_list'),
+    path('system/', views.company_create, name='system'),
+    path('system/<int:pk>/update/', views.system_update, name='system_update'),  
 ]

@@ -16,8 +16,8 @@
 
 <h2 class="mb-4 text-primary">User List</h2>
 
-{% if request.user.is_superuser or 'user_create' in permissions_list %}
-<a href="#" class="btn btn-success mb-3">
+{% if request.user.is_superuser or 'supplier_create' in permissions_list %}
+<a href="{% url 'add_user' %}" class="btn btn-success mb-3">
     + Add User
 </a>
 {% endif %}
@@ -31,8 +31,8 @@
                     <th>Username</th>
                     <th>Email</th>
                     <th>Role</th>
-                    {% if permissions_list and 'user_update' in permissions_list or permissions_list and 'user_delete' in permissions_list %}
-                        <th>Action</th>
+                    {% if request.user.is_superuser or 'supplier_update' in permissions_list or 'supplier_delete' in permissions_list %}
+                    <th>Action</th>
                     {% endif %}
                 </tr>
             </thead>
@@ -48,7 +48,7 @@
                     <td>
                         {% if user.userprofile and user.userprofile.role %}
                            
-                            <span class="badge bg-primary">{{ user.userprofile.role.name }}</span>
+                            <span class="badge bg-success">{{ user.userprofile.role.name }}</span>
 
                             
                         {% else %}
@@ -57,20 +57,20 @@
                     </td>
 
                 
+                    {% if request.user.is_superuser or 'supplier_update' in permissions_list %}
                     <td>
-                        {% if permissions_list and 'user_update' in permissions_list %}
-                        <a href="#" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="{% url 'edit_user' user.id %}" class="btn btn-sm btn-primary">Edit</a>
                         {% endif %}
-                        {% if permissions_list and 'user_delete' in permissions_list %}
-                        <form action="#" method="post" style="display:inline;">
+                        {% if request.user.is_superuser or 'supplier_delete' in permissions_list %}
+                        <form action="{% url 'delete_user' user.id %}" method="post" style="display:inline;">
                             {% csrf_token %}
                             <button class="btn btn-sm btn-danger"
-                                onclick="return confirm('Are you sure you want to delete this user?')">
-                                Delete
-                            </button>
-                        </form>
-                        {% endif %}
-                    </td>
+                            onclick="return confirm('Are you sure you want to delete this user?')">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+                {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>

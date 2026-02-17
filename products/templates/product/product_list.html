@@ -1,12 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+        <div class="alert alert-success {{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <h2 class="mb-4 text-primary">Product List</h2>
-<a href="{% url 'product_create' %}" class="btn btn-primary mb-3">Create Product</a>
+
+{% if request.user.is_superuser or 'product_create' in permissions_list %}
+<a href="{% url 'product_create' %}" class="btn btn-success mb-3">
+    + Add Product
+</a>
+{% endif %}
+
 <div class="card shadow-sm">
-    <div class="card-body">
-        <table class="table table-bordered table-striped table-hover align-middle">
-            <thead class="table-dark">
+    <div class="body">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-primary">
                 <tr>
                     <th>ID</th>
                     <th>Name</th>
@@ -15,7 +33,9 @@
                     <th>Stock</th>
                     <th>Description</th>
                     <th>Created At</th>
+                    {% if permissions_list and 'product_update' in permissions_list or permissions_list and 'product_delete' in permissions_list %}
                     <th>Action</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -24,40 +44,43 @@
                     <td>{{ forloop.counter }}</td>
                     <td>{{ product.name }}</td>
                     <td>{{ product.category.name }}</td>
-                    <td>৳{{ product.price }}</td>
+                    <td>${{ product.price }}</td>
                     <td>
                         {% if product.stock %}
-                            {% if product.stock.quantity > 7 %}
-                                <span class="badge bg-success">{{ product.stock.quantity }}</span>
-                            {% elif product.stock.quantity > 0 %}
-                                <span class="badge bg-warning text-dark">{{ product.stock.quantity }}</span>
-                            {% else %}
-                                <span class="badge bg-danger">Out of Stock</span>
-                            {% endif %}
+                            <span class="badge {% if product.stock.quantity < 8 %}bg-danger{% else %}bg-primary{% endif %}">
+                                {{ product.stock.quantity }}
+                            </span>
                         {% else %}
-                            <span class="badge bg-secondary">0</span>
+                            <span class="badge bg-danger">0</span>
                         {% endif %}
                     </td>
 
                     <td>{{ product.description|default:"-" }}</td>
                     <td>{{ product.created_at|date:"Y-m-d H:i" }}</td>
+                    
+                    {% if permissions_list and 'product_update' in permissions_list or permissions_list and 'product_delete' in permissions_list %}
                     <td>
+                        {% if permissions_list and 'product_update' in permissions_list %}
                         <a href="{% url 'product_update' product.id %}" class="btn btn-sm btn-primary">Edit</a>
-                        <form action="{% url 'product_delete' product.id %}" method="post" style="display:inline;" >
+                        {% endif %}
+                        {% if permissions_list and 'product_delete' in permissions_list %}
+                        <form action="{% url 'product_delete' product.id %}" method="post" style="display:inline;">
                             {% csrf_token %}
-                            <button class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this category?')">Delete</button>
+                            <button class="btn btn-sm btn-danger"
+                                onclick="return confirm('Are you sure you want to delete this product?')">Delete</button>
                         </form>
+                        {% endif %}
                     </td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">No products found.</td>
+                    <td colspan="8" class="text-center">No products found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-
 
 {% endblock %}

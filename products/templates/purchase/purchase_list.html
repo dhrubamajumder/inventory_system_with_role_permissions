@@ -3,9 +3,12 @@
 {% block content %}
 <h2 class="mb-4 text-primary">Purchase List</h2>
 
-<a href="{% url 'purchase_create' %}" class="btn btn-primary mb-3">
-    + Create Purchase
+
+{% if request.user.is_superuser or 'purchase_create' in permissions_list %}
+<a href="{% url 'purchase_create' %}" class="btn btn-success mb-3">
+    + Add purchase
 </a>
+{% endif %}
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -73,9 +76,11 @@
                     <!-- Action -->
                     <td>
                         <a href="{% url 'purchase_detail' purchase.id %}" class="btn btn-sm btn-info"> View </a>
+                        {% if request.user.is_superuser or 'purchase_update' in permissions_list %}
 
                         <a href="{% url 'purchase_update' purchase.id %}" class="btn btn-sm btn-warning"> Edit </a>
-
+                        {% endif %}
+                        {% if request.user.is_superuser or 'purchase_delete' in permissions_list %}
                         <form action="{% url 'purchase_delete' purchase.id %}"
                               method="post"
                               style="display:inline;">
@@ -85,6 +90,7 @@
                                 Delete
                             </button>
                         </form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

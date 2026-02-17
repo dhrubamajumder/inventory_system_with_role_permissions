@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="images justify-content-center d-flex">
+        {% if settings.logo %}
+        <img src="{{ settings.logo.url }}" alt="Company Logo" style="height:300px; width:300px;">
+        {% endif %}
+    </div>
+    
+    <div class="card-header d-flex justify-content-between">
+        
+        <h6 class="mb-0">System Settings</h6>
+        {% if request.user.is_superuser or permissions_list and 'system_update' in permissions_list %}
+        {% if settings %}
+            <a href="{% url 'system_update' settings.id %}" class="btn btn-success btn-sm">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+        {% else %}
+            <a href="{% url 'system' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus"></i> Create
+            </a>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    {% if settings %}
+    <div class="card-body p-3">
+        <table class="table table-bordered mb-0">
+
+            <tr><th>Company Name :</th><td>{{ settings.company_name }}</td></tr>
+            <tr><th>Tag Line :</th><td>{{ settings.tagline }}</td></tr>
+            <tr><th>Contact Number :</th><td>{{ settings.mobile }}</td></tr>
+            <tr><th>Email :</th><td>{{ settings.email }}</td></tr>
+            <tr><th>Address :</th><td>{{ settings.address }}</td></tr>
+            <tr><th>VAT :</th><td>{{ settings.vat }} %</td></tr>
+            <tr><th>Token/Table :</th><td>{{ settings.token_or_table }}</td></tr>
+            <tr><th>Payment Type :</th><td>{{ settings.payment_type }}</td></tr>
+            <tr><th>Website :</th><td>{{ settings.website }}</td></tr>
+        </table>
+    </div>
+
+    {% else %}
+        <div class="card-body text-center text-muted">
+            No settings found. Please create system settings.
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+

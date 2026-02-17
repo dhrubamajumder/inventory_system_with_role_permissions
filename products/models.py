@@ -72,11 +72,7 @@ class PurchaseItem(models.Model):
     
 
 class Stock(models.Model):
-    product = models.OneToOneField(
-        Product,
-        on_delete=models.CASCADE,
-        related_name='stock'
-    )
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='stock')
     quantity = models.IntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -108,3 +104,18 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return self.user.username
+    
+class SystemSettings(models.Model):
+    company_name = models.CharField(max_length=100)
+    tagline = models.CharField(max_length=100)
+    logo = models.ImageField(upload_to='logos/', blank=True, null=True)
+    mobile = models.CharField(max_length=20)
+    email = models.EmailField()
+    address = models.TextField()
+    vat = models.PositiveIntegerField()
+    token_or_table = models.CharField(max_length=100)
+    payment_type = models.CharField(max_length=100)
+    website = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.company_name

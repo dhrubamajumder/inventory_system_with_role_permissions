@@ -1,6 +1,6 @@
 from django import forms 
 from django.contrib.auth.models import User
-from .models import Category, Product, Purchase, PurchaseItem, Supplier, Permission, Role
+from .models import Category, Product, Purchase, PurchaseItem, Supplier, Permission, Role, SystemSettings
 
 
 class RegisterForm(forms.ModelForm):
@@ -109,4 +109,11 @@ class RoleForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control'}),
         }
         
-        
+
+class SystemSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SystemSettings
+        fields = '__all__'
+        widgets = {
+            'address': forms.Textarea(attrs={'rows': 3}),
+        }

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container my-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <h2 class="text-center"><b>Company Profile</b></h2>
+                    <hr>
+
+                    <!-- Company Name -->
+                    <div class="col-md-6">
+                        <label class="form-label">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" name="company_name" class="form-control" placeholder="Company Name" value="{{ form.company_name.value|default_if_none:'' }}"
+>
+                    </div>
+
+                    <!-- tag line -->
+                    <div class="col-md-6">
+                        <label class="form-label">Tagline <span class="text-danger">*</span></label>
+                        <input type="text" name="tagline" class="form-control" placeholder="Enter Tagline" value="{{ form.tagline.value|default_if_none:'' }}">
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6">
+                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" placeholder="Email" value="{{ form.email.value|default_if_none:'' }}">
+                    </div>
+
+                    <!-- Mobile -->
+                    <div class="col-md-6">
+                        <label class="form-label">Mobile No <span class="text-danger">*</span></label>
+                        <input type="text" name="mobile" class="form-control" placeholder="01*********" value="{{ form.mobile.value|default_if_none:'' }}">
+                    </div>
+
+                    <!-- Company Logo -->
+                    <div class="col-md-6">
+                        <label class="form-label">Company Logo</label>
+                        <input type="file" name="logo" class="form-control" accept="image/*">
+                        {% if form.instance.logo %}
+                            <img src="{{ form.instance.logo.url }}" alt="Company Logo" style="height:80px;">
+                        {% endif %}
+
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="delete_logo">
+                            <label class="form-check-label">Delete Company Image</label>
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="col-12">
+                        <label class="form-label">Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="address" rows="3">{{ form.address.value|default_if_none:'' }}</textarea>
+                    </div>
+                    
+                    <!-- VAT -->
+                    <div class="col-md-6">
+                        <label class="form-label">Vat <span class="text-danger">*</span></label>
+                        <input type="number" name="vat" class="form-control" value="{{ form.vat.value|default_if_none:'' }}">
+                    </div>
+
+                    <!-- Token or Table -->
+                    <div class="col-md-6">
+                        <label class="form-label">Token or Table <span class="text-danger">*</span></label>
+                        <select class="form-select" name="token_or_table">
+                            <option value="table" {% if form.token_or_table.value == "table" %}selected{% endif %}>Table</option>
+                            <option value="token" {% if form.token_or_table.value == "token" %}selected{% endif %}>Token</option>
+                        </select>
+                    </div>
+
+                    <!-- Sales Payment Type -->
+                    <div class="col-md-6">
+                        <label class="form-label">Sales Payment Type <span class="text-danger">*</span></label>
+                        <select class="form-select" name="payment_type">
+                            <option value="pay_last" {% if form.payment_type.value == "pay_last" %}selected{% endif %}>Pay Last</option>
+                            <option value="pay_first" {% if form.payment_type.value == "pay_first" %}selected{% endif %}>Pay First</option>
+                        </select>
+                    </div>
+
+
+
+                    <!-- website -->
+                    <div class="col-md-6">
+                        <label class="form-label">Website <span class="text-danger">*</span></label>
+                        <input type="text" name="website" class="form-control" placeholder="Enter Website URL" value="{{ form.website.value|default_if_none:'' }}">
+                    </div>
+
+                    
+                <!-- Submit -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-house-door"></i> Update System
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

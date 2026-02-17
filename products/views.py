@@ -1,15 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from . models import Category, Product, Purchase, Stock, Supplier, Permission, Role
-from . forms import CategoryForm, ProductForm, PurchaseForm, PurchaseItem, SupplierForm, PermissionForm, RoleForm
+from . models import Category, Product, Purchase, Stock, Supplier, Permission, Role, UserProfile, SystemSettings
+from . forms import CategoryForm, ProductForm, PurchaseForm, PurchaseItem, SupplierForm, PermissionForm, RoleForm, SystemSettingsForm
 from collections import defaultdict
 from .decorators import get_role_permissions
 from django.contrib import messages
 from django.contrib.auth.models import User
+from .decorators import admin_required, staff_or_admin_required, get_role_permissions, role_permission_required
+
 
 
 # --------------------------------  Category Create  -----------------------------------------------------------------
-@login_required
+
+@login_required(login_url='/login/')
+@role_permission_required('category_create')
 def create_category(request):
     form = CategoryForm(request.POST or None)
     if form.is_valid():
@@ -19,14 +23,31 @@ def create_category(request):
 
 
 # --------------------------------  Category List  --------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def category_list(request):
+    # get role permissions
+    role, permission, permissions_list = get_role_permissions(request.user)
+
+    # superuser হলে সব permission auto add
+    if request.user.is_superuser:
+        permissions_list = [
+            'category_create',
+            'category_update',
+            'category_delete',
+        ]
+
     categories = Category.objects.all().order_by('-id')
-    return render(request, 'category/category_list.html', {'categories':categories})
+    context = {
+        'categories': categories,
+        'permissions_list': permissions_list,
+    }
+    return render(request, 'category/category_list.html', context)
 
 
 # --------------------------------  Category Update  --------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def update_category(request, pk):
     category = get_object_or_404(Category, pk=pk)
     form = CategoryForm(request.POST or None, instance=category)
@@ -37,7 +58,8 @@ def update_category(request, pk):
 
 
 # ---------------------- Category  Delete   -------------------
-@login_required
+
+@login_required(login_url='/login/')
 def delete_category(request, pk):
     category = get_object_or_404(Category, pk=pk)
     if request.method == 'POST':
@@ -49,32 +71,51 @@ def delete_category(request, pk):
 # -------------------------------------------------     Product     ---------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------------------
 
-@login_required
+@login_required(login_url='/login/')
 def product_list(request):
-    products = Product.objects.select_related('stock').order_by('-id')
-    return render(request, 'product/product_list.html', {'products': products})
-    
+    products = Product.objects.all().order_by('id')
+    role, permissions, permissions_list = get_role_permissions(request.user)
+
+    context = {
+        'products': products,
+        'role': role,
+        'permissions': permissions,
+        'permissions_list': permissions_list,
+    }
+    return render(request, 'product/product_list.html', context)
+
 # ---------------------- Product  Create   ------------------------------
 
-@login_required
+
+
+@login_required(login_url='/login/')
+@role_permission_required('product_create')
 def create_product(request):
     products = Product.objects.all().order_by('id')
+    role, permissions, permissions_list = get_role_permissions(request.user)
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('product_list')  
+            messages.success(request, "Product created successfully!")
+            return redirect('product_list')
     else:
         form = ProductForm()
     context = {
         'form': form,
         'products': products,
+        'role': role,
+        'permissions': permissions,
+        'permissions_list': permissions_list,   # ✅ add this
     }
     return render(request, 'product/product_form.html', context)
 
 
+
 # ----------------------  Product Update   ------------------------------
-@login_required
+
+@login_required(login_url='/login/')
+@role_permission_required('product_update')
 def product_update(request, pk):
     products = get_object_or_404(Product, pk=pk)
     form = ProductForm(request.POST or None, instance=products)
@@ -85,7 +126,9 @@ def product_update(request, pk):
 
 
 # ---------------------- Product Delete  ------------------------------
-@login_required
+
+@login_required(login_url='/login/')
+@role_permission_required('product_delete')
 def product_delete(request, pk):
     prodcuts = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
@@ -98,14 +141,17 @@ def product_delete(request, pk):
 # -------------------------------------------------     Supplier     ---------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------------------
 
-@login_required
+
+@login_required(login_url='/login/')
 def supplier_list(request):
     suppliers = Supplier.objects.all().order_by('-id')
-    return render(request, 'supplier/supplier_list.html', {'suppliers':suppliers})
+    role, permissions, permissions_list = get_role_permissions(request.user)
+    return render(request, 'supplier/supplier_list.html', {'suppliers':suppliers, 'permissions':permissions, 'permissions_list':permissions_list})
 
 
 # ---------------------- Supplier Create ------------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def supplier_create(request):
     if request.method == 'POST':
         form = SupplierForm(request.POST)
@@ -118,7 +164,8 @@ def supplier_create(request):
 
 
 # ---------------------- Supplier  Update   ------------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def supplier_update(request, pk):
     suppliers = get_object_or_404(Supplier, pk=pk)
     form = SupplierForm(request.POST or None, instance=suppliers)
@@ -130,7 +177,8 @@ def supplier_update(request, pk):
 
 
 # ---------------------- Supplier Delete   ------------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def supplier_delete(request, pk):
     supplier = get_object_or_404(Supplier, pk=pk)
     if request.method == 'POST':
@@ -144,7 +192,8 @@ def supplier_delete(request, pk):
 # ---------------------------------------------------------------------------------------------------------------------------------
 
 # ---------------------- Purchase  Create   ------------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def create_purchase(request):
     if request.method == 'POST':
         form = PurchaseForm(request.POST)
@@ -175,7 +224,8 @@ def create_purchase(request):
     })
 
 # ----------------------------------------  Purchase Update  -------------------------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def purchase_update(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     products = Product.objects.all().order_by('id')
@@ -217,9 +267,11 @@ def purchase_update(request, pk):
 
 
 # ----------------------------------------  Purchase  List  -------------------------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def purchase_list(request):
     purchases = Purchase.objects.prefetch_related('items__product').order_by('-id')
+    role, permissions, permissions_list = get_role_permissions(request.user)
     grand_total = 0
     for p in purchases:
         try:
@@ -229,11 +281,12 @@ def purchase_list(request):
             continue
     return render(request, 'purchase/purchase_list.html', {
         'purchases': purchases,
-        'grand_total': grand_total
+        'grand_total': grand_total, 'permissions':permissions, 'permissions_list':permissions_list
     })
 
 # ----------------------------------------  Purchase  Details  -------------------------------------------
-@login_required
+
+@login_required(login_url='/login/')
 def purchase_detail(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     return render(request, 'purchase/purchase_details.html', {'purchase': purchase})
@@ -241,7 +294,7 @@ def purchase_detail(request, pk):
 
 # ----------------------------------------  Purchase  Details  ------------------------------------------- 
 
-@login_required
+@login_required(login_url='/login/')
 def purchase_delete(request, pk):
     purchases = get_object_or_404(Purchase, pk=pk)
     if request.method == 'POST':
@@ -258,11 +311,14 @@ def purchase_delete(request, pk):
 # ----------------------------------------------------------------------------------- 
 # ----------------------------------------  Purmission  List  ------------------------------------------- 
 # --------------------------------------------------------------------------------- 
+
+@login_required(login_url='/login/')
 def permission_list(request):
     permissions = Permission.objects.all().order_by('-id')
     return render(request, 'permission/permission_list.html', {'permissions':permissions})
 
 
+@login_required(login_url='/login/')
 def permission_create(request):
     form = PermissionForm(request.POST or None)
     if form.is_valid():
@@ -274,12 +330,16 @@ def permission_create(request):
 # ----------------------------------------------------------------------------------- 
 # ----------------------------------------  Role  List  ------------------------------------------- 
 # --------------------------------------------------------------------------------- 
+
+@login_required(login_url='/login/')
 def role_list(request):
-    role, permission, permission_list = get_role_permissions(request.user)
     roles = Role.objects.all().order_by('-id')
-    return render(request, 'role/role_list.html', {'roles':roles, 'permissions_list':permission_list, 'permission':permission, 'role':role})
+    role, permissions, permissions_list = get_role_permissions(request.user)
+    return render(request, 'role/role_list.html', {'roles':roles, 'permissions_list':permissions_list, 'permissions':permissions})
 
 
+@login_required(login_url='/login/')
+@role_permission_required('role_create')   
 def role_create(request):
     form = RoleForm(request.POST or None)
     if form.is_valid():
@@ -291,6 +351,8 @@ def role_create(request):
     return render(request, 'role/role_form.html', {'form': form})
 
 
+@login_required(login_url='/login/')
+@role_permission_required('role_update')
 def role_update(request, pk):
     role = get_object_or_404(Role, pk=pk)
     form = RoleForm(request.POST or None, instance=role)
@@ -301,6 +363,8 @@ def role_update(request, pk):
     return render(request, 'role/role_form.html', {'form': form, 'role': role})
 
 
+@login_required(login_url='/login/')
+@role_permission_required('role_delete')
 def role_delete(request, pk):
     role = get_object_or_404(Role, pk=pk)
     if request.method == 'POST':
@@ -310,8 +374,141 @@ def role_delete(request, pk):
 
 
 #----------------------------------   User  --------------------------------------
+@login_required(login_url='/login/')
+
 def user_list(request):
     role, permissions, permission_list = get_role_permissions(request.user)
     users = User.objects.all().order_by('-id')
     return render(request, 'user/user_list.html', {'users': users, 'permissions_list': permission_list, 'permissions':permissions, 'role':role})
+
+login_required(login_url='/login/')
+@role_permission_required('user_create')
+def add_user(request):
+    roles = Role.objects.all()
+    superuser_role = Role.objects.filter(name='superuser').first()
+    superuser_exists = False
+    if superuser_role:
+        superuser_exists = UserProfile.objects.filter(role=superuser_role).exists()
+    if request.method == 'POST':
+        username = request.POST['username'].strip()
+        email = request.POST['email'].strip()
+        password = request.POST['password']
+        role_id = request.POST.get('role')
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already registered.")
+            return redirect('add_user')
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered.")
+            return redirect('add_user')
+        if (
+            superuser_role and
+            role_id and
+            int(role_id) == superuser_role.id and
+            superuser_exists):
+            messages.error(request, "Superuser already exists. Cannot create another one.")
+            return redirect('add_user')
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password)
+        role = Role.objects.get(id=role_id) if role_id else None
+        UserProfile.objects.create(user=user, role=role)
+        messages.success(request, "User created successfully!")
+        return redirect('user_list')
+    return render(request,'user/add_user.html',{'roles': roles,'superuser_exists': superuser_exists})
+
+
+@login_required(login_url='/login/')
+def edit_user(request, id):
+    target_user = User.objects.get(id=id)
+    superuser_role = Role.objects.filter(name='SuperUser').first()
+    superuser_exists = False
+    if superuser_role:
+        superuser_exists = UserProfile.objects.filter(role=superuser_role).exclude(user=target_user).exists()
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST.get('password')
+        role_id = request.POST.get('role')
+        target_user.username = username
+        target_user.email = email
+        if password:
+            target_user.set_password(password)
+        target_user.save()
+        if role_id:
+            selected_role = Role.objects.get(id=role_id)
+            if selected_role.name == 'SuperUser' and superuser_exists:
+                messages.error(request, "Superuser role is already assigned. Cannot assign again.")
+                return redirect('edit_user', user_id=id)
+
+            profile, created = UserProfile.objects.get_or_create(user=target_user)
+            profile.role = selected_role
+            profile.save()
+
+
+        messages.success(request, "User updated successfully!")
+        return redirect('user_list')
+    roles = Role.objects.all()
+    if superuser_role and superuser_exists:
+        roles = roles.exclude(id=superuser_role.id)
+    return render(request, 'user/add_user.html', {'roles': roles,'target_user': target_user,'superuser_exists': superuser_exists})
+
+
+@login_required(login_url='/login/')
+def delete_user(request, id):
+    user = get_object_or_404(User, id=id)
+    if request.method == 'POST':
+        user.delete()
+        return redirect('user_list')
+    
+
+
+# ---------------   system settings -----------------
+@login_required(login_url='/login/')
+def system_list(request):
+    settings_instance = SystemSettings.objects.first()
+    return render(request, 'system/system_list.html', {'settings': settings_instance})
+
+# Create new system settings
+@login_required(login_url='/login/')
+def company_create(request):
+    if SystemSettings.objects.exists():
+        return redirect('system_list')
+    if request.method == "POST":
+        form = SystemSettingsForm(request.POST, request.FILES)
+        if form.is_valid():
+            instance = form.save(commit=False)
+            if request.POST.get('delete_logo') and instance.logo:
+                instance.logo.delete(save=False)
+                instance.logo = None
+            instance.save()
+            return redirect('system_list')
+    else:
+        form = SystemSettingsForm()
+    print(form.instance.logo)   
+    print(form.errors)    
+    return render(request, 'system/system.html', {'form': form, 'title': 'Create System Settings'})
+      
+
+
+# Update existing system settings
+@login_required(login_url='/login/')
+@role_permission_required('system_update')
+def system_update(request, pk):
+    settings_instance = get_object_or_404(SystemSettings, pk=pk)
+    if request.method == "POST":
+        form = SystemSettingsForm(request.POST, request.FILES, instance=settings_instance)
+        if form.is_valid():
+            instance = form.save(commit=False)
+            if request.POST.get('delete_logo') and instance.logo:
+                instance.logo.delete(save=False)
+                instance.logo = None
+            instance.save()
+            return redirect('system_list')
+    else:
+        form = SystemSettingsForm(instance=settings_instance)
+    print(form.instance.logo)   
+    print(form.errors) 
+    return render(request, 'system/system.html', {'form': form, 'title': 'Update System Settings'})
+
 
