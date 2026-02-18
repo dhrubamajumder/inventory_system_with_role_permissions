@@ -105,7 +105,7 @@ a[aria-expanded="true"] .rotate-icon {
                     <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'order_list' %}"><i class="bi bi-bag-plus"></i> Collect Order</a>
+                    <a class="nav-link" href="{% url 'create_order' %}"><i class="bi bi-bag-plus"></i> Collect Order</a>
                 </li>
             
                 {% with request.resolver_match.url_name as url_name %}

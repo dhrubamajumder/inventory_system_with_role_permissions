@@ -600,7 +600,6 @@ def ajax_products_by_category(request, category_id):
         products = Product.objects.filter(stock__isnull=False, stock__quantity__gt=0)
     else:
         products = Product.objects.filter(category_id=category_id, stock__isnull=False, stock__quantity__gt=0)
-
     data = []
     for p in products:
         data.append({
@@ -610,10 +609,6 @@ def ajax_products_by_category(request, category_id):
             'stock': p.stock.quantity
         })
     return JsonResponse(data, safe=False)
-
-
-
-
 
 # ===============================================================================================
 # ------------------------------------       pending order view      -----------------------------
