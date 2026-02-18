@@ -17,7 +17,7 @@
 <h2 class="mb-4 text-primary">User List</h2>
 
 {% if request.user.is_superuser or 'supplier_create' in permissions_list %}
-<a href="{% url 'add_user' %}" class="btn btn-success mb-3">
+<a href="{% url 'user_create' %}" class="btn btn-success mb-3">
     + Add User
 </a>
 {% endif %}

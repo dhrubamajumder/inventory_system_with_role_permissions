@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<style>
+    .product-card {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        background: #f8f9fa;
+    }
+    .product-card:hover {
+        background: #e9ecef;
+    }
+    .product-price {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    .category-btn {
+        margin: 3px;
+    }
+</style>
+
+<div class="container-fluid mt-3">
+    <div class="row">
+        <!-- LEFT SIDE -->
+        <div class="col-md-8 card shadow-sm p-3">
+            <!-- Categories -->
+            <div class="mb-3" id="category-area">
+                <button type="button" class="btn btn-secondary category-btn" data-id="all">
+                    All
+                </button>
+
+                {% for category in categories %}
+                    <button type="button" class="btn btn-secondary category-btn" data-id="{{ category.id }}">
+                        {{ category.name }}
+                    </button>
+                {% endfor %}
+            </div>
+
+            <!-- Product grid -->
+            <div class="row g-3" id="product-grid">
+                {% for product in products %}
+                    <div class="col-md-3">
+                        <div class="product-card"
+                            data-id="{{ product.id }}"
+                            data-name="{{ product.name }}"
+                            data-price="{{ product.price }}"
+                            data-stock="{{ product.stock.quantity|default:0 }}">
+                            {{ product.name }}
+                            <div class="product-price">{{ product.price }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    Invoice Summary 
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'create_order' %}" id="order-form" >
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <label class="form-label">Table :</label>
+                            <input type="text" name="table" class="form-control" placeholder="Enter Table">
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Order Type :</label>
+                            <select name="order_type" class="form-select">
+                                <option value="heaving">Heaving</option>
+                                <option value="parcel">Parcel</option>
+                            </select>
+                        </div>
+
+                        <!-- Order Table (dynamic) -->
+                        <table class="table table-bordered table-striped table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Item</th>
+                                    <th>Qty</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-items">
+                            </tbody>
+                        </table>
+
+                        <input type="hidden" name="order_items" id="order-items-input">
+                        
+                        <div class="mb-2">
+                            <label>Grand Amount</label>
+                            <input type="text" name="grand_total" id="grand-amount" class="form-control" value="0" readonly>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col">
+                                <label>Discount (%)</label>
+                                <input type="number" name="discount" id="discount-amount" class="form-control" value="0" min="0" max="100">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label>Fund</label>
+                                <select name="fund" class="form-select">
+                                    <option value="cash">Cash</option>
+                                    <option value="bkash">Bkash</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label>Paid Amount</label>
+                                <input type="number" name="paid_amount" class="form-control" value="0">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">Confirm Bill</button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ----------------------------------------------------------------------------------------------->
+<!--------------------------------------------- javaScript ----------------------------------------->
+<!-- ----------------------------------------------------------------------------------------------->
+
+<script>
+ document.addEventListener('DOMContentLoaded', function () {
+
+    const productGrid = document.getElementById('product-grid');
+    const categoryArea = document.getElementById('category-area');
+    const orderTable = document.getElementById('order-items');
+    const grandAmountInput = document.getElementById('grand-amount');
+    const discountInput = document.getElementById('discount-amount'); // percentage input
+
+    // -------------------------
+    // Update Grand Total
+    // -------------------------
+    function updateGrandTotal() {
+        let total = 0;
+        orderTable.querySelectorAll('tr').forEach(row => {
+            const amount = parseFloat(row.querySelector('.amount').innerText) || 0;
+            total += amount;
+        });
+        let discountPercent = parseFloat(discountInput.value) || 0;
+
+        // ensure discount is between 0-100
+        if(discountPercent < 0) discountPercent = 0;
+        if(discountPercent > 100) discountPercent = 100;
+
+        // discount calculation
+        const discountedTotal = total * (1 - discountPercent / 100);
+        grandAmountInput.value = discountedTotal.toFixed(2);
+    }
+
+    // -------------------------
+    // Category click (AJAX)
+    // -------------------------
+    categoryArea.addEventListener('click', function (e) {
+        const btn = e.target.closest('.category-btn');
+        if (!btn) return;
+
+        e.preventDefault();
+        const categoryId = btn.dataset.id;
+        console.log("Category clicked:", categoryId);
+        loadProducts(categoryId);
+    });
+
+    // -------------------------
+    // Product click (delegation)
+    // -------------------------
+    productGrid.addEventListener('click', function(e){
+        const card = e.target.closest('.product-card');
+        if(!card) return;
+
+        const id = card.dataset.id;
+        const name = card.dataset.name;
+        const price = parseFloat(card.dataset.price);
+
+        let row = orderTable.querySelector(`tr[data-id="${id}"]`);
+
+        if(row){
+            let qtySpan = row.querySelector('.qty');
+            let qty = parseInt(qtySpan.innerText) + 1;
+            qtySpan.innerText = qty;
+            row.querySelector('.amount').innerText = (qty * price).toFixed(2);
+        } else {
+            row = document.createElement('tr');
+            row.dataset.id = id;
+            row.dataset.price = price;
+
+            row.innerHTML = `
+                <td><button class="btn btn-sm text-danger remove-item">✖</button></td>
+                <td><p style="font-size: 13px">${name}</p></td>
+                <td class="qty-cell" style="padding: .2rem .1rem;">
+                    <button class="btn btn-sm btn-light decrement">−</button>
+                    <span class="qty">1</span>
+                    <button class="btn btn-sm btn-light increment">+</button>
+                </td>
+                <td>${price.toFixed(2)}</td>
+                <td class="amount">${price.toFixed(2)}</td>
+            `;
+            orderTable.appendChild(row);
+        }
+        updateGrandTotal();
+    });
+
+    // -------------------------
+    // Order table + / - / remove
+    // -------------------------
+    document.addEventListener('click', function(e){
+        if(e.target.classList.contains('increment')){
+            const row = e.target.closest('tr');
+            const qtySpan = row.querySelector('.qty');
+            let qty = parseInt(qtySpan.innerText) + 1;
+            qtySpan.innerText = qty;
+            row.querySelector('.amount').innerText = (qty * row.dataset.price).toFixed(2);
+            updateGrandTotal();
+        }
+
+        if(e.target.classList.contains('decrement')){
+            const row = e.target.closest('tr');
+            const qtySpan = row.querySelector('.qty');
+            let qty = parseInt(qtySpan.innerText) - 1;
+            if(qty <= 0){
+                row.remove();
+            } else {
+                qtySpan.innerText = qty;
+                row.querySelector('.amount').innerText = (qty * row.dataset.price).toFixed(2);
+            }
+            updateGrandTotal();
+        }
+
+        if(e.target.classList.contains('remove-item')){
+            e.target.closest('tr').remove();
+            updateGrandTotal();
+        }
+    });
+
+    // -------------------------
+    // Discount input change
+    // -------------------------
+    if(discountInput){
+        discountInput.addEventListener('input', updateGrandTotal);
+    }
+
+});
+
+// -------------------------
+// Load products by category via AJAX
+// -------------------------
+function loadProducts(categoryId){
+    fetch(`/orders/ajax/products/${categoryId}/`)
+    .then(res => {
+        if(!res.ok) throw new Error(res.status);
+        return res.json();
+    })
+    .then(products => {
+        console.log("Products:", products);
+        const grid = document.getElementById('product-grid');
+        grid.innerHTML = '';
+
+        products.forEach(p => {
+            grid.innerHTML += `
+                <div class="col-md-3">
+                    <div class="product-card"
+                         data-id="${p.id}"
+                         data-name="${p.name}"
+                         data-price="${p.price}"
+                         data-stock="${p.stock}">
+                        ${p.name}
+                        <div class="product-price">${p.price}</div>
+                    </div>
+                </div>
+            `;
+        });
+    })
+    .catch(err => console.error("AJAX Error:", err));
+}
+
+document.getElementById('order-form').addEventListener('submit', function(e){
+    const orderItems = [];
+    document.querySelectorAll('#order-items tr').forEach(row => {
+        orderItems.push({
+            product_id: row.dataset.id,
+            quantity: parseInt(row.querySelector('.qty').innerText),
+            price: parseFloat(row.dataset.price)
+        });
+    });
+
+    if(orderItems.length === 0){
+        e.preventDefault();
+        alert("Please add at least one product!");
+        return false;
+    }
+
+    // Assign JSON to hidden input
+    document.getElementById('order-items-input').value = JSON.stringify(orderItems);
+});
+
+
+</script>
+
+
+
+{% endblock %}

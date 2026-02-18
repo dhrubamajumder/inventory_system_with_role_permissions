@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, Supplier, Purchase, Stock, Role, Permission
+from .models import Category, Product, Supplier, Purchase, Stock, Role, Permission, OrderItem, Order
 
 admin.site.register(Category)
 admin.site.register(Product)
@@ -8,3 +8,5 @@ admin.site.register(Purchase)
 admin.site.register(Stock)
 admin.site.register(Role)
 admin.site.register(Permission)
+admin.site.register(OrderItem)
+admin.site.register(Order)

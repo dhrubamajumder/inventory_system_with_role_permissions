@@ -24,33 +24,31 @@
                     <th>Name</th>
                     <th>Category</th>
                     <th>Stock</th>
-                    
                 </tr>
             </thead>
             <tbody>
-                {% with 0 as counter %}
-                    {% for product in products %}
-                        {% with counter|add:1 as counter %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ product.name }}</td>
-                            <td>{{ product.category.name }}</td>
-                            <td>
-                                <span class="badge bg-danger">
+                {% for product in products %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.category.name }}</td>
+                        <td>
+                            {% if product.stock %}
+                                <span class="badge {% if product.stock.quantity < 8 %}bg-danger{% else %}bg-primary{% endif %}">
                                     {{ product.stock.quantity }}
                                 </span>
-                            </td>
-                        </tr>
-                        {% endwith %}
-                    {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center">No low stock products found.</td>
-                        </tr>
-                    {% endfor %}
-                {% endwith %}
+                            {% else %}
+                                <span class="badge bg-danger">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No low stock products found.</td>
+                    </tr>
+                {% endfor %}
             </tbody>
-
-
+        </table>
     </div>
 </div>
 

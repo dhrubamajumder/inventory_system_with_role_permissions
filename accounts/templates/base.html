@@ -81,6 +81,8 @@ a[aria-expanded="true"] .rotate-icon {
             </button>
             <a class="navbar-brand fw-bold" href="#">Inventory System</a>
             <div class="ms-auto d-flex align-items-center">
+                
+                <a href="{% url 'pending_orders' %}" class="btn btn-default text-white me-2">Pending Orders</a>
 
                 <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
@@ -92,7 +94,7 @@ a[aria-expanded="true"] .rotate-icon {
 
     <div class="layout d-flex">
 <!-- Sidebar (Desktop) -->
-        <div class="sidebar d-none d-lg-block p-3">
+        <div class="sidebar d-none d-lg-block p-1">
             <div class="text-center mb-4 mt-3">
                 <div> {{ user.username }}<span class="text-success">●</span></div>
                 <p style="opacity: 70%; color: #73a4da;">Welcome: <span style="color: rgb(255, 255, 255);">{{ user.userprofile.role.name }}</span> </p>
@@ -103,7 +105,7 @@ a[aria-expanded="true"] .rotate-icon {
                     <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-bag-plus"></i> Collect Order</a>
+                    <a class="nav-link" href="{% url 'order_list' %}"><i class="bi bi-bag-plus"></i> Collect Order</a>
                 </li>
             
                 {% with request.resolver_match.url_name as url_name %}
@@ -160,49 +162,49 @@ a[aria-expanded="true"] .rotate-icon {
                 <li class="nav-item">
                     <a class="nav-link" href="#"><i class="bi bi-file-earmark-text"></i> Reports</a>
                 </li>
+
                 <li class="nav-item">
-                <a class="nav-link d-flex justify-content-between align-items-center
-                {% if request.resolver_match.url_name in 'user_list role_list permission_list' %}
-                    active
-                {% endif %}"
-                data-bs-toggle="collapse"
-                href="#Menu"
-                role="button"
-                aria-expanded="{% if request.resolver_match.url_name in 'user_list role_list permission_list' %}true{% else %}false{% endif %}">
-
-                    <span><i class="bi bi-people"></i> Users</span>
-                    <i class="bi bi-chevron-down rotate-icon"></i>
-                </a>
-
-                <div class="collapse
+                    <a class="nav-link d-flex justify-content-between align-items-center
                     {% if request.resolver_match.url_name in 'user_list role_list permission_list' %}
-                        show
+                        active
                     {% endif %}"
-                    id="Menu">
+                    data-bs-toggle="collapse"
+                    href="#Menu"
+                    role="button"
+                    aria-expanded="{% if request.resolver_match.url_name in 'user_list role_list permission_list' %}true{% else %}false{% endif %}">
+                        <span><i class="bi bi-people"></i> Users</span>
+                        <i class="bi bi-chevron-down rotate-icon"></i>
+                    </a>
 
-                    <ul class="nav flex-column bg-dark">
-                        <li>
-                            <a class="nav-link {% if request.resolver_match.url_name == 'user_list' %}active bg-secondary{% endif %}"
-                            href="{% url 'user_list' %}">
-                                Users List
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link {% if request.resolver_match.url_name == 'role_list' %}active bg-secondary{% endif %}"
-                            href="{% url 'role_list' %}">
-                                Role Assign
-                            </a>
-                        </li>
+                    <div class="collapse
+                        {% if request.resolver_match.url_name in 'user_list role_list permission_list' %}
+                            show
+                        {% endif %}"
+                        id="Menu">
 
-                        <li>
-                            <a class="nav-link {% if request.resolver_match.url_name == 'permission_list' %}active bg-secondary{% endif %}"
-                            href="{% url 'permission_list' %}">
-                                Permissions
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
+                        <ul class="nav flex-column bg-dark">
+                            <li>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'user_list' %}active bg-secondary{% endif %}"
+                                href="{% url 'user_list' %}">
+                                    Users List
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'role_list' %}active bg-secondary{% endif %}"
+                                href="{% url 'role_list' %}">
+                                    Role Assign
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'permission_list' %}active bg-secondary{% endif %}"
+                                href="{% url 'permission_list' %}">
+                                    Permissions
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
 
 
             </ul>
@@ -218,17 +220,107 @@ a[aria-expanded="true"] .rotate-icon {
             <div class="offcanvas-body">
                 <ul class="nav flex-column">
                     <li><a class="nav-link text-white" href="#">Home</a></li>
-                    <li><a class="nav-link text-white" href="#">Collect Order</a></li>
-                    <li><a class="nav-link text-white" href="#">Product Inventory</a></li>
-                    <li><a class="nav-link text-white" href="#">Basic Settings</a></li>
+                    <li><a class="nav-link text-white" href="{% url 'order_list' %}">Collect Order</a></li>
+
+                    {% comment %} product inventory {% endcomment %}
+                    {% with request.resolver_match.url_name as url_name %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center {% if url_name in 'purchase_create purchase_list' %}active bg-secondary{% endif %}" data-bs-toggle="collapse" href="#inventoryMenu" aria-expanded="{% if url_name in 'purchase_create purchase_list' %}true{% else %}false{% endif %}">
+
+                            <span><i class="bi bi-box-seam"></i> Product Inventory</span><i class="bi bi-chevron-down rotate-icon"></i></a>
+
+                        <div class="collapse {% if url_name in 'purchase_create purchase_list' %}show{% endif %}" id="inventoryMenu">
+                            <ul class="nav flex-column bg-dark ms-3">
+                                <li><a class="nav-link {% if url_name == 'purchase_create' %}active text-info{% endif %}" href="{% url 'purchase_create' %}"> Purchase </a></li>
+
+                                <li>
+                                    <a class="nav-link {% if url_name == 'purchase_list' %}active text-info{% endif %}"
+                                    href="{% url 'purchase_list' %}">
+                                        Purchase List
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    {% endwith %}
+
+                    {% comment %} <---- basic settings ---> {% endcomment %}
+                    {% with request.resolver_match.url_name as url_name %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center
+                            {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %} active bg-secondary {% endif %}" data-bs-toggle="collapse" href="#accountsMenu" aria-expanded="{% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %}true{% else %}false{% endif %}">
+                            <span><i class="bi bi-gear"></i> Basic Settings</span><i class="bi bi-chevron-down rotate-icon"></i></a>
+
+                        <div class="collapse {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %}show{% endif %}" id="accountsMenu">
+                            <ul class="nav flex-column bg-dark ms-3">
+                                <li><a class="nav-link {% if url_name == 'category_create' %}active text-info{% endif %}" href="{% url 'category_create' %}"> Category </a></li>
+
+                                <li><a class="nav-link {% if url_name == 'category_list' %}active text-info{% endif %}" href="{% url 'category_list' %}"> Category List </a></li>
+                                
+                                <li><a class="nav-link {% if url_name == 'product_create' %}active text-info{% endif %}" href="{% url 'product_create' %}"> Product Create </a></li>
+                                
+                                <li><a class="nav-link {% if url_name == 'product_list' %}active text-info{% endif %}" href="{% url 'product_list' %}"> Products List </a></li>
+
+                                <li><a class="nav-link {% if url_name == 'supplier_create' %}active text-info{% endif %}" href="{% url 'supplier_create' %}"> Supplier Create </a></li>
+
+                                <li><a class="nav-link {% if url_name == 'supplier_list' %}active text-info{% endif %}" href="{% url 'supplier_list' %}"> Supplier List </a></li>
+
+                                <li><a class="nav-link {% if url_name == 'stock_list' %}active text-info{% endif %}" href="{% url 'stock_list' %}"> Low Stock List</a></li>
+
+                                <li><a class="nav-link mb-3 {% if url_name == 'system_list' %}active text-info{% endif %}" href="{% url 'system_list' %}"> System Settings </a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    {% endwith %}
                     <li><a class="nav-link text-white" href="#">Reports</a></li>
-                    <li><a class="nav-link text-white" href="#">Users</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center
+                        {% if request.resolver_match.url_name in 'user_list role_list permission_list' %}
+                            active
+                        {% endif %}"
+                        data-bs-toggle="collapse"
+                        href="#Menu"
+                        role="button"
+                        aria-expanded="{% if request.resolver_match.url_name in 'user_list role_list permission_list' %}true{% else %}false{% endif %}">
+                            <span><i class="bi bi-people"></i> Users</span>
+                            <i class="bi bi-chevron-down rotate-icon"></i>
+                        </a>
+
+                        <div class="collapse
+                            {% if request.resolver_match.url_name in 'user_list role_list permission_list' %}
+                                show
+                            {% endif %}"
+                            id="Menu">
+
+                            <ul class="nav flex-column bg-dark">
+                                <li>
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'user_list' %}active bg-secondary{% endif %}"
+                                    href="{% url 'user_list' %}">
+                                        Users List
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'role_list' %}active bg-secondary{% endif %}"
+                                    href="{% url 'role_list' %}">
+                                        Role Assign
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'permission_list' %}active bg-secondary{% endif %}"
+                                    href="{% url 'permission_list' %}">
+                                        Permissions
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
                 </ul>
             </div>
         </div>
 
 <!-- Main content -->
-        <div class="main-content pt-4">
+        <div class="main-content pt-4" style="width: 80%;" >
             {% block content %} {% endblock %}
         </div>
     </div>

@@ -64,7 +64,7 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="number" name="quantity" class="form-control qty" value="{{ item.quantity }}">
+                                    <input type="number" name="quantity" min="1" class="form-control qty" value="{{ item.quantity }}">
                                 </td>
                                 <td>
                                     <input type="number" name="purchase_price" class="form-control price" value="{{ item.purchase_price }}" readonly>
@@ -175,5 +175,14 @@ document.addEventListener("click", e=>{
         calculate();
     }
 });
+
+document.addEventListener("input", function (e) {
+    if (e.target.classList.contains("qty")) {
+        if (e.target.value < 1) {
+            e.target.value = 1;
+        }
+    }
+});
+
 </script>
 {% endblock %}

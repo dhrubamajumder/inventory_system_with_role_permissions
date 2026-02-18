@@ -35,8 +35,8 @@ urlpatterns = [
     path('role/<int:pk>/update/', views.role_update, name='role_update'),
     path('role/<int:pk>/delete/', views.role_delete, name='role_delete'),
 
-    path('users/list/', views.user_list, name='user_list'),
-    path('user/create/',  views.add_user, name='add_user'),
+    path('user/list/', views.user_list, name='user_list'),
+    path('user/create/',  views.add_user, name='user_create'),
     path('users/edit/<int:id>/',  views.edit_user, name='edit_user'),
     path('users/delete/<int:id>/',  views.delete_user, name='delete_user'),
     
@@ -45,4 +45,23 @@ urlpatterns = [
     path('system/<int:pk>/update/', views.system_update, name='system_update'),  
     
     path('stock/list/', views.low_stock_list, name='stock_list'),
+    
+    path('showsales/', views.collect_order_list, name='collect_order_list'),
+    path('showsales/category/<int:category_id>/', views.collect_order_list, name='collect_order_list_by_category'),
+    
+    path('orders/', views.order_list, name='order_list'),
+    path('orders/category/<int:category_id>/', views.order_list, name='order_list_by_category'),
+    
+    path('product/orders/ajax/products/<str:category_id>/', views.ajax_products_by_category, name='ajax_products'),
+    
+    path('orders/pending/', views.pending_orders, name='pending_order'),
+    path('orders/save/', views.save_order, name='save_order'),
+    
+    path('order/pending/', views.pending_order_list, name='pending_orders'),
+
+    path('orders/create/', views.create_order, name='create_order'),
+
+    # path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
+
+
 ]

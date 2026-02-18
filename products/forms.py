@@ -58,7 +58,7 @@ class PurchaseItemForm(forms.ModelForm):
         fields = ['product', 'quantity', 'purchase_price']  
         widgets = {
             'product': forms.Select(attrs={'class': 'form-select product'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'purchase_price': forms.NumberInput(attrs={'class': 'form-control price', 'readonly': True}),
         }
 

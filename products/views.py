@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from . models import Category, Product, Purchase, Stock, Supplier, Permission, Role, UserProfile, SystemSettings
+from . models import Category, Product, Purchase, Stock, Supplier, Permission, Role, UserProfile, SystemSettings, Order, OrderItem
 from . forms import CategoryForm, ProductForm, PurchaseForm, PurchaseItem, SupplierForm, PermissionForm, RoleForm, SystemSettingsForm
 from collections import defaultdict
 from .decorators import get_role_permissions
 from django.contrib import messages
 from django.contrib.auth.models import User
 from .decorators import admin_required, staff_or_admin_required, get_role_permissions, role_permission_required
-
+from django.http import JsonResponse
+import json
 
 
 # --------------------------------  Category Create  -----------------------------------------------------------------
@@ -152,6 +153,7 @@ def supplier_list(request):
 # ---------------------- Supplier Create ------------------------------
 
 @login_required(login_url='/login/')
+@role_permission_required('supplier_create')
 def supplier_create(request):
     if request.method == 'POST':
         form = SupplierForm(request.POST)
@@ -195,6 +197,7 @@ def supplier_delete(request, pk):
 
 
 @login_required(login_url='/login/')
+@role_permission_required('purchase_create')
 def create_purchase(request):
     if request.method == 'POST':
         form = PurchaseForm(request.POST)
@@ -357,6 +360,7 @@ def permission_list(request):
 
 
 @login_required(login_url='/login/')
+@role_permission_required('permission_create')
 def permission_create(request):
     form = PermissionForm(request.POST or None)
     if form.is_valid():
@@ -558,3 +562,127 @@ def low_stock_list(request):
     context = {'products': products, 'role': role, 'permissions': permissions, 'permissions_list': permissions_list}
     return render(request, 'low_stock/stock_list.html', context)
 
+
+
+# --------------------------  Collecting Orders  ----------------------------------
+
+def order_list(request, category_id = None):
+    categories = Category.objects.all()
+    if category_id:
+        selected_category = get_object_or_404(Category, pk=category_id)
+        products = Product.objects.filter(category=selected_category)
+    else:
+        products = Product.objects.all()
+        selected_category = None
+    context = {'categories':categories, 'products':products, 'selected_category':selected_category}
+    return render(request, 'collect_order/order_list.html', context)
+
+# -------------------------------------------------------------------------------------------------------
+
+def collect_order_list(request, category_id=None):
+    categories = Category.objects.all()
+    if category_id:
+        selected_category = get_object_or_404(Category, pk=category_id)
+        products = Product.objects.filter(category=selected_category)
+    else:
+        products = Product.objects.all()
+        selected_category = None
+    context = {'categories':categories, 'products':products, 'selected_category':selected_category}
+    return render(request, 'collect_order/collect_order_list.html',context)
+
+
+
+# --------------------------  JsonResponse  --------------------------------
+
+def ajax_products_by_category(request, category_id):
+    if category_id == 'all':
+        products = Product.objects.all()
+    else:
+        products = Product.objects.filter(category_id=category_id)
+    data = []
+    for p in products:
+        data.append({
+            'id': p.id,
+            'name': p.name,
+            'price': float(p.price),
+            'stock': p.stock.quantity if hasattr(p, 'stock') else 0
+        })
+    return JsonResponse(data, safe=False)
+
+
+# ----------   pending order view  ------------
+def pending_order(request):
+    return render(request, 'collect_order/pending_order.html')
+
+def create_order(request):
+    if request.method == 'POST':
+        table = request.POST.get('table')
+        order_type = request.POST.get('order_type')
+        discount = request.POST.get('discount')
+        grand_total = request.POST.get('grand_total')
+        paid_amount = request.POST.get('paid_amount')
+        fund = request.POST.get('fund')
+
+        order = Order.objects.create(
+            table=table,
+            order_type=order_type,
+            discount=discount,
+            grand_total=grand_total,
+            paid_amount=paid_amount,
+            fund=fund,
+            status='pending'  
+        )
+
+        items = json.loads(request.POST.get('order_items'))
+
+        for item in items:
+            product = Product.objects.get(id=item['product_id'])
+            quantity = int(item['quantity'])
+            price = float(item['price'])
+            amount = quantity * price
+            
+            OrderItem.objects.create(
+                order=order,
+                product_name=product,
+                quantity=item['quantity'],
+                price=item['price'],
+                amount=amount
+            )
+
+        return redirect('pending_orders')  # pending list page
+    
+
+def save_order(request):
+    if request.method == 'POST':
+        table = request.POST.get('table')
+        order_type = request.POST.get('order_type')
+        discount = float(request.POST.get('discount', 0))
+        grand_total = float(request.POST.get('grand_total', 0))
+        fund = request.POST.get('fund')
+        paid_amount = float(request.POST.get('paid_amount', 0))
+        order_items_json = request.POST.get('order_items')
+        order_items = json.loads(order_items_json)
+        # Create Order
+        order = Order.objects.create(
+            table=table,
+            order_type=order_type,
+            discount=discount,
+            grand_total=grand_total,
+            fund=fund,
+            paid_amount=paid_amount,
+            status='pending'
+        )
+        # Create OrderItems
+        for item in order_items:
+            OrderItem.objects.create(order=order, product_id=item['product_id'], quantity=item['quantity'], price=item['price'], amount=item['quantity']*item['price'])
+
+        return redirect('pending_orders')
+
+# ------------------=================== 
+def pending_orders(request):
+    orders = Order.objects.filter(status='pending').order_by('-created_at')
+    return render(request, 'collect_order/pending_order.html', {'orders': orders})
+
+def pending_order_list(request):
+    orders = Order.objects.filter(status='pending').order_by('-id')
+    return render(request, 'collect_order/pending_order.html', {'orders': orders})
