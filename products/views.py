@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from .decorators import admin_required, staff_or_admin_required, get_role_permissions, role_permission_required
 from django.http import JsonResponse
 import json
+from django.db.models import Sum
 
 
 # --------------------------------  Category Create  -----------------------------------------------------------------
@@ -504,8 +505,9 @@ def delete_user(request, id):
         return redirect('user_list')
     
 
-
-# ---------------   system settings -----------------
+# ===============================================================================================
+# ------------------------------------------   system settings ----------------------------------
+# ===============================================================================================
 @login_required(login_url='/login/')
 def system_list(request):
     settings_instance = SystemSettings.objects.first()
@@ -531,8 +533,6 @@ def company_create(request):
     print(form.errors)    
     return render(request, 'system/system.html', {'form': form, 'title': 'Create System Settings'})
       
-
-
 # Update existing system settings
 @login_required(login_url='/login/')
 @role_permission_required('system_update')
@@ -553,9 +553,10 @@ def system_update(request, pk):
     print(form.errors) 
     return render(request, 'system/system.html', {'form': form, 'title': 'Update System Settings'})
 
+# ===============================================================================================
+# ------------------------------------------   low stock ----------------------------------
+# ===============================================================================================
 
-
-# -------------------------------------------------  low stock  ----------------------------------
 def low_stock_list(request):
     products = Product.objects.filter(stock__quantity__lt=8).order_by('id')
     role, permissions, permissions_list = get_role_permissions(request.user)
@@ -563,8 +564,9 @@ def low_stock_list(request):
     return render(request, 'low_stock/stock_list.html', context)
 
 
-
-# --------------------------  Collecting Orders  ----------------------------------
+# ===============================================================================================
+# ------------------------------------       Collecting Orders      -----------------------------
+# ===============================================================================================
 
 def order_list(request, category_id = None):
     categories = Category.objects.all()
@@ -593,35 +595,43 @@ def collect_order_list(request, category_id=None):
 
 
 # --------------------------  JsonResponse  --------------------------------
-
 def ajax_products_by_category(request, category_id):
     if category_id == 'all':
-        products = Product.objects.all()
+        products = Product.objects.filter(stock__isnull=False, stock__quantity__gt=0)
     else:
-        products = Product.objects.filter(category_id=category_id)
+        products = Product.objects.filter(category_id=category_id, stock__isnull=False, stock__quantity__gt=0)
+
     data = []
     for p in products:
         data.append({
             'id': p.id,
             'name': p.name,
             'price': float(p.price),
-            'stock': p.stock.quantity if hasattr(p, 'stock') else 0
+            'stock': p.stock.quantity
         })
     return JsonResponse(data, safe=False)
 
 
-# ----------   pending order view  ------------
-def pending_order(request):
-    return render(request, 'collect_order/pending_order.html')
+
+
+
+# ===============================================================================================
+# ------------------------------------       pending order view      -----------------------------
+# ===============================================================================================
 
 def create_order(request):
     if request.method == 'POST':
         table = request.POST.get('table')
         order_type = request.POST.get('order_type')
-        discount = request.POST.get('discount')
-        grand_total = request.POST.get('grand_total')
-        paid_amount = request.POST.get('paid_amount')
+        discount = request.POST.get('discount') or 0
+        grand_total = request.POST.get('grand_total') or 0
+        paid_amount = request.POST.get('paid_amount') or 0
         fund = request.POST.get('fund')
+
+        #  check pending order by table
+        if Order.objects.filter(table=table, status='pending').exists():
+            messages.error(request, f"Table {table} already has a pending order!")
+            return redirect('create_order')
 
         order = Order.objects.create(
             table=table,
@@ -630,26 +640,45 @@ def create_order(request):
             grand_total=grand_total,
             paid_amount=paid_amount,
             fund=fund,
-            status='pending'  
+            status='pending'
         )
 
-        items = json.loads(request.POST.get('order_items'))
-
+        items = json.loads(request.POST.get('order_items', '[]'))
+        
         for item in items:
             product = Product.objects.get(id=item['product_id'])
             quantity = int(item['quantity'])
             price = float(item['price'])
             amount = quantity * price
-            
+
+            # Stock check
+            if product.stock.quantity < quantity:
+                messages.error(request, f"{product.name} not available.")
+                order.delete() 
+                return redirect('create_order')
+            # OrderItem create
             OrderItem.objects.create(
                 order=order,
-                product_name=product,
-                quantity=item['quantity'],
-                price=item['price'],
+                product_name=product.name,
+                quantity=quantity,
+                price=price,
                 amount=amount
             )
+            # Stock update
+            product.stock.quantity -= quantity
+            product.stock.save()
+            
+        messages.success(request, "Order created successfully!")
+        return redirect('pending_orders')
 
-        return redirect('pending_orders')  # pending list page
+    # ✅ IMPORTANT: GET request handle
+    categories = Category.objects.all()
+    products = Product.objects.filter(stock__isnull=False, stock__quantity__gt=0)
+    # products = Product.objects.all()
+    return render(request, 'collect_order/order_list.html', {
+        'categories': categories,
+        'products': products
+    })
     
 
 def save_order(request):
@@ -678,11 +707,33 @@ def save_order(request):
 
         return redirect('pending_orders')
 
-# ------------------=================== 
-def pending_orders(request):
-    orders = Order.objects.filter(status='pending').order_by('-created_at')
-    return render(request, 'collect_order/pending_order.html', {'orders': orders})
+# ==============================================================================================
 
 def pending_order_list(request):
-    orders = Order.objects.filter(status='pending').order_by('-id')
-    return render(request, 'collect_order/pending_order.html', {'orders': orders})
+    orders = Order.objects.filter(status='pending') \
+        .prefetch_related('items') \
+        .order_by('-id')
+    settings = SystemSettings.objects.first()
+    return render(request, 'collect_order/pending_order.html', {
+        'orders': orders,
+        'settings': settings,
+    })
+
+
+def accept_order(request, order_id):
+    order = Order.objects.get(id=order_id, status='pending')
+    order.status = 'completed'
+    order.save()
+    messages.success(request, f"Order accepted successfully!")
+    return redirect('pending_orders')  # redirect to sales report
+
+
+# =========================================  Sales Report ======================================
+
+def sales_report_list(request):
+    orders = Order.objects.filter(status='completed').order_by('-created_at')
+    total_grand = orders.aggregate(total=Sum('grand_total'))['total'] or 0
+    return render(request, 'report/sales_list.html', {
+        'orders': orders,
+        'total_grand': total_grand
+    })

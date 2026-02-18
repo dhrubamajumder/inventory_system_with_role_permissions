@@ -54,14 +54,13 @@ urlpatterns = [
     
     path('product/orders/ajax/products/<str:category_id>/', views.ajax_products_by_category, name='ajax_products'),
     
-    path('orders/pending/', views.pending_orders, name='pending_order'),
     path('orders/save/', views.save_order, name='save_order'),
     
-    path('order/pending/', views.pending_order_list, name='pending_orders'),
-
     path('orders/create/', views.create_order, name='create_order'),
+    path('order/pending/', views.pending_order_list, name='pending_orders'),
+    path('order/accept/<int:order_id>/', views.accept_order, name='accept_order'),
 
-    # path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('sales/report/', views.sales_report_list, name='sales_report'),
 
 
 ]
