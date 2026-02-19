@@ -10,7 +10,10 @@ from .decorators import admin_required, staff_or_admin_required, get_role_permis
 from django.http import JsonResponse
 import json
 from django.db.models import Sum
-
+from django.db.models.functions import TruncMonth
+from decimal import Decimal
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # --------------------------------  Category Create  -----------------------------------------------------------------
 
@@ -732,3 +735,58 @@ def sales_report_list(request):
         'orders': orders,
         'total_grand': total_grand
     })
+    
+    
+# =========================================  Admin Dashboard ======================================
+def admin_dashboard(request):
+    purchases = Purchase.objects.prefetch_related('items__product')
+    total_purchase = Decimal(sum([p.total for p in purchases]))
+    total_sales = Decimal(
+        Order.objects.filter(status='completed').aggregate(total=Sum('grand_total'))['total'] or 0
+    )
+    profit = total_sales - total_purchase
+
+    monthly_totals = defaultdict(Decimal)
+    for p in purchases:
+        month = p.purchase_date.strftime('%Y-%m')  
+        monthly_totals[month] += p.total
+
+    purchase_chart = [{'month': k, 'total': float(v)} for k, v in sorted(monthly_totals.items())]
+
+    sales_chart = (
+        Order.objects.filter(status='completed')
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total=Sum('grand_total'))
+        .order_by('month')
+    )
+
+    return render(request, 'dashboard/admin_dashboard.html', {
+        'total_purchase': total_purchase,
+        'total_sales': total_sales,
+        'profit': profit,
+        'purchase_chart': purchase_chart,
+        'sales_chart': sales_chart,
+    })
+    
+    
+# def purchase_list(request):
+#     purchases = Purchase.objects.prefetch_related('items__product').order_by('-id')
+#     role, permissions, permissions_list = get_role_permissions(request.user)
+#     grand_total = 0
+#     for p in purchases:
+#         try:
+#             grand_total += p.total  
+#         except Exception as e:
+#             print(f"Error calculating total for Purchase {p.id}: {e}")
+#             continue
+#     return render(request, 'purchase/purchase_list.html', {
+#         'purchases': purchases,
+#         'grand_total': grand_total, 'permissions':permissions, 'permissions_list':permissions_list
+#     })
+
+
+
+@receiver(post_save, sender=PurchaseItem)
+def update_purchase_total(sender, instance, **kwargs):
+    instance.purchase.update_total_amount()

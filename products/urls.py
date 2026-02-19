@@ -61,6 +61,8 @@ urlpatterns = [
     path('order/accept/<int:order_id>/', views.accept_order, name='accept_order'),
 
     path('sales/report/', views.sales_report_list, name='sales_report'),
+    
+    path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
 
 
 ]

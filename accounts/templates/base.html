@@ -6,6 +6,8 @@
 <title>Inventory Dashboard</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <style>
 body {
@@ -129,34 +131,7 @@ a[aria-expanded="true"] .rotate-icon {
                 </li>
                 {% endwith %}
 
-
-                {% with request.resolver_match.url_name as url_name %}
-                <li class="nav-item">
-                    <a class="nav-link d-flex justify-content-between align-items-center
-                        {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list system_list' %} active bg-secondary {% endif %}" data-bs-toggle="collapse" href="#accountsMenu" aria-expanded="{% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %}true{% else %}false{% endif %}">
-                        <span><i class="bi bi-gear"></i> Basic Settings</span><i class="bi bi-chevron-down rotate-icon"></i></a>
-
-                    <div class="collapse {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list system_list' %}show{% endif %}" id="accountsMenu">
-                        <ul class="nav flex-column bg-dark ms-3">
-                            <li><a class="nav-link {% if url_name == 'category_create' %}active text-info{% endif %}" href="{% url 'category_create' %}"> Category </a></li>
-
-                            <li><a class="nav-link {% if url_name == 'category_list' %}active text-info{% endif %}" href="{% url 'category_list' %}"> Category List </a></li>
-                            
-                            <li><a class="nav-link {% if url_name == 'product_create' %}active text-info{% endif %}" href="{% url 'product_create' %}"> Product Create </a></li>
-                            
-                            <li><a class="nav-link {% if url_name == 'product_list' %}active text-info{% endif %}" href="{% url 'product_list' %}"> Products List </a></li>
-
-                            <li><a class="nav-link {% if url_name == 'supplier_create' %}active text-info{% endif %}" href="{% url 'supplier_create' %}"> Supplier Create </a></li>
-
-                            <li><a class="nav-link {% if url_name == 'supplier_list' %}active text-info{% endif %}" href="{% url 'supplier_list' %}"> Supplier List </a></li>
-
-                            <li><a class="nav-link mb-3 {% if url_name == 'system_list' %}active text-info{% endif %}" href="{% url 'system_list' %}"> System Settings </a></li>
-                        </ul>
-                    </div>
-                </li>
-                {% endwith %}
-
-{% comment %} ====================================   Report =============================== {% endcomment %}
+                {% comment %} ====================================   Report =============================== {% endcomment %}
                 <li class="nav-item">
                     <a class="nav-link d-flex justify-content-between align-items-center
                     {% if request.resolver_match.url_name in 'sales_report stock_list ' %}
@@ -191,6 +166,34 @@ a[aria-expanded="true"] .rotate-icon {
                         </ul>
                     </div>
                 </li>
+
+                {% with request.resolver_match.url_name as url_name %}
+                <li class="nav-item">
+                    <a class="nav-link d-flex justify-content-between align-items-center
+                        {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list system_list' %} active bg-secondary {% endif %}" data-bs-toggle="collapse" href="#accountsMenu" aria-expanded="{% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list stock_list system_list' %}true{% else %}false{% endif %}">
+                        <span><i class="bi bi-gear"></i> Basic Settings</span><i class="bi bi-chevron-down rotate-icon"></i></a>
+
+                    <div class="collapse {% if url_name in 'product_create product_list category_create category_list supplier_create supplier_list system_list' %}show{% endif %}" id="accountsMenu">
+                        <ul class="nav flex-column bg-dark ms-3">
+                            <li><a class="nav-link {% if url_name == 'category_create' %}active text-info{% endif %}" href="{% url 'category_create' %}"> Category </a></li>
+
+                            <li><a class="nav-link {% if url_name == 'category_list' %}active text-info{% endif %}" href="{% url 'category_list' %}"> Category List </a></li>
+                            
+                            <li><a class="nav-link {% if url_name == 'product_create' %}active text-info{% endif %}" href="{% url 'product_create' %}"> Product Create </a></li>
+                            
+                            <li><a class="nav-link {% if url_name == 'product_list' %}active text-info{% endif %}" href="{% url 'product_list' %}"> Products List </a></li>
+
+                            <li><a class="nav-link {% if url_name == 'supplier_create' %}active text-info{% endif %}" href="{% url 'supplier_create' %}"> Supplier Create </a></li>
+
+                            <li><a class="nav-link {% if url_name == 'supplier_list' %}active text-info{% endif %}" href="{% url 'supplier_list' %}"> Supplier List </a></li>
+
+                            <li><a class="nav-link mb-3 {% if url_name == 'system_list' %}active text-info{% endif %}" href="{% url 'system_list' %}"> System Settings </a></li>
+                        </ul>
+                    </div>
+                </li>
+                {% endwith %}
+
+
 {% comment %} ========================   Users   ============================= {% endcomment %}
                 <li class="nav-item">
                     <a class="nav-link d-flex justify-content-between align-items-center
@@ -357,7 +360,7 @@ a[aria-expanded="true"] .rotate-icon {
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </body>
 </html>

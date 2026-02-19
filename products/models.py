@@ -43,6 +43,7 @@ class Purchase(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     purchase_date = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(
         max_length=20,
         choices=[
@@ -56,17 +57,19 @@ class Purchase(models.Model):
     def total(self):
         return sum(item.total() for item in self.items.all())
 
+    def update_total_amount(self):
+        self.total_amount = self.total
+        self.save()
+
 
 class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-
     quantity = models.PositiveIntegerField(
         validators=[MinValueValidator(1)]
     )
-
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
-
+    
     def total(self):
         return self.quantity * self.purchase_price
 
